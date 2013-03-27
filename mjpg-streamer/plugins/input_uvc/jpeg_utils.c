@@ -139,13 +139,15 @@ int compress_yuyv_to_jpeg(struct vdIn *vd, unsigned char *buffer, int size, int 
     struct jpeg_compress_struct cinfo;
     struct jpeg_error_mgr jerr;
     JSAMPROW row_pointer[1];
-    unsigned char *line_buffer, *yuyv;
-    int z;
+    unsigned char *line_buffer, *yuyv, *yplane, *uplane, *vplane;
+    int y, z;
     static int written;
 
     line_buffer = calloc(vd->width * 3, 1);
     yuyv = vd->framebuffer;
-
+    yplane = yuyv;
+    uplane = yuyv + vd->height * vd->width;
+    vplane = yuyv + vd->height * vd->width + (vd->height * vd->width)/4;
     cinfo.err = jpeg_std_error(&jerr);
     jpeg_create_compress(&cinfo);
     /* jpeg_stdio_dest (&cinfo, file); */
@@ -162,24 +164,32 @@ int compress_yuyv_to_jpeg(struct vdIn *vd, unsigned char *buffer, int size, int 
     jpeg_start_compress(&cinfo, TRUE);
 
     z = 0;
+    y = 0;
     while(cinfo.next_scanline < vd->height) {
         int x;
         unsigned char *ptr = line_buffer;
 
         for(x = 0; x < vd->width; x++) {
             int r, g, b;
-            int y, u, v;
+            int yc, uc, vc;
 
-            if(!z)
+	    /*            if(!z)
                 y = yuyv[0] << 8;
             else
                 y = yuyv[2] << 8;
-            u = yuyv[1] - 128;
-            v = yuyv[3] - 128;
+	    u = yuyv[1] - 128;
+	    v = yuyv[3] - 128;*/
+	   
+	    int xp = x;
+	    int yp = y * vd->width;	   
 
-            r = (y + (359 * v)) >> 8;
-            g = (y - (88 * u) - (183 * v)) >> 8;
-            b = (y + (454 * u)) >> 8;
+	    yc = yplane[xp + yp] << 8;
+	    uc = uplane[xp/2 + yp/4] - 128;
+	    vc = vplane[xp/2 + yp/4] - 128;
+
+            r = (yc + (359 * vc)) >> 8;
+            g = (yc - (88 * uc) - (183 * vc)) >> 8;
+            b = (yc + (454 * uc)) >> 8;
 
             *(ptr++) = (r > 255) ? 255 : ((r < 0) ? 0 : r);
             *(ptr++) = (g > 255) ? 255 : ((g < 0) ? 0 : g);
@@ -187,10 +197,10 @@ int compress_yuyv_to_jpeg(struct vdIn *vd, unsigned char *buffer, int size, int 
 
             if(z++) {
                 z = 0;
-                yuyv += 4;
+		//yuyv += 1;
             }
         }
-
+	y ++;
         row_pointer[0] = line_buffer;
         jpeg_write_scanlines(&cinfo, row_pointer, 1);
     }

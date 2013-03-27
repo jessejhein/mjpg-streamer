@@ -775,6 +775,7 @@ void *client_thread(void *arg)
     }
 
     /* determine what to deliver */
+    printf("%s\n", buffer);
     if(strstr(buffer, "GET /?action=snapshot") != NULL) {
         req.type = A_SNAPSHOT;
 #ifdef WXP_COMPAT
@@ -782,7 +783,7 @@ void *client_thread(void *arg)
         req.type = A_SNAPSHOT;
 #endif
         input_suffixed = 255;
-    } else if(strstr(buffer, "GET /?action=stream") != NULL) {
+    } else if((strstr(buffer, "GET /?action=stream") != NULL)) {
         input_suffixed = 255;
         req.type = A_STREAM;
 #ifdef WXP_COMPAT

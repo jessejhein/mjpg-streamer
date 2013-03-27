@@ -196,7 +196,7 @@ int input_init(input_parameter *param, int id)
         case 8:
         case 9:
             DBG("case 8,9\n");
-            format = V4L2_PIX_FMT_YUYV;
+	    format = V4L2_PIX_FMT_YUYV;	    
             break;
 
             /* q, quality */
@@ -264,6 +264,7 @@ int input_init(input_parameter *param, int id)
 
     DBG("vdIn pn: %d\n", id);
     /* open video device and prepare data structure */
+    
     if(init_videoIn(cams[id].videoIn, dev, width, height, fps, format, 1, cams[id].pglobal, id) < 0) {
         IPRINT("init_VideoIn failed\n");
         closelog();
